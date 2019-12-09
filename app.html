@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sketch</title>
+    <link href="https://fonts.googleapis.com/css?family=Saira+Condensed&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link href="lib/styles.css" type="text/css" rel="stylesheet">
+</head>
+<body>
+    <div class="">
+        <div id="settings" class="float-left">
+            <form class="form">
+                <div class="form-group">
+                    <label class="mr-4">Elastic force </label>
+                    <input id="spring-input" class="form-control" type="range" min="5" max="150">
+                </div>
+                <div class="form-group">
+                    <label class="mr-4">Web color </label>
+                    <input id="lineColor-input" class="form-control" type="color">
+                </div>
+                <div class="form-group">
+                    <label class="mr-4">Elastic band color </label>
+                    <input id="springColor-input" class="form-control" type="color">
+                </div>
+            </form>
+        </div>
+        <canvas id="sketch-canvas"></canvas>
+    </div>
+
+    <script src="lib/geometry.js"></script>
+    <script>
+        var springFactor = 50;
+        var thickSegmentColor = "#848484";
+        var thinSegmentColor = "#903e47";
+        var sketchLine = new Line(),
+            s,
+            e;
+
+        var canvas = document.querySelector("#sketch-canvas");
+        var ctx = canvas.getContext("2d");
+        var margin = getComputedStyle(canvas).marginLeft;
+        margin = +margin.substring(0, margin.length - 2);
+       canvas.width = window.innerWidth - 2*margin;
+        canvas.height = window.innerHeight - 2*margin;
+
+
+        document.querySelector("#spring-input").value = springFactor;
+        document.querySelector("#lineColor-input").value = thickSegmentColor;
+        document.querySelector("#springColor-input").value = thinSegmentColor;
+
+        var drawLineSegment = function(sPt, ePt, isThin) {
+            if (isThin) {
+                ctx.strokeStyle = thinSegmentColor;
+                ctx.lineWidth = .2;
+            }
+            else {
+                ctx.strokeStyle = thickSegmentColor;
+                ctx.lineWidth = .5;
+            }
+
+            ctx.beginPath();
+            ctx.moveTo(sPt.x, sPt.y);
+            ctx.lineTo(ePt.x, ePt.y);
+            ctx.stroke();
+        };
+
+        function getEvtPoint(evt) {
+            return new Point((evt.clientX - canvas.offsetLeft), (evt.clientY - canvas.offsetTop));
+        }
+
+        // ------------------------------------------------------------------------------------
+        //                              EVENT LISTENERS
+        // ------------------------------------------------------------------------------------
+
+        canvas.addEventListener("mousedown", function(evt) {
+            canvas.onmousemove = onMouseMove;
+            s = new Point(0, 0);
+        });
+
+        canvas.addEventListener("mouseup", function(evt) {
+            canvas.onmousemove = null;
+        });
+
+        var onMouseMove = function(evt) {
+            e = getEvtPoint(evt);
+
+            if (!s.isZero) {
+                sketchLine.segments.forEach(function(ss) {
+                    if (e.distance(ss) < springFactor && Math.random() < 0.01) {
+                        drawLineSegment(ss, e, true);
+                    }
+                });
+
+                drawLineSegment(s, e, false);
+                sketchLine.addPoint(e);
+            }
+            else {
+                sketchLine.addPoint(e);
+            }
+            s = e;
+        };
+
+        document.querySelector("#spring-input").addEventListener("input", function(){
+            springFactor = this.value;
+        });
+
+        document.querySelector("#lineColor-input").addEventListener("input", function(){
+            thickSegmentColor = this.value;
+        });
+
+        document.querySelector("#springColor-input").addEventListener("input", function(){
+            thinSegmentColor = this.value;
+        });
+    </script>
+</body>
+</html>
